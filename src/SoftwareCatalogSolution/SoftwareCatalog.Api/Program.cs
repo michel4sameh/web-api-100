@@ -1,3 +1,7 @@
+using FluentValidation;
+using Marten;
+using SoftwareCatalog.Api.Catalog;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -10,8 +14,18 @@ builder.Services.AddSwaggerGen();
 
 // This is saying use the "System" time provider, anywhere we need an instance of the TimeProvider
 
-
+builder.Services.AddScoped<IValidator<CatalogItemRequestModel>, CatalogItemRequestModelValidator>();
 builder.Services.AddSingleton<TimeProvider>((_) => TimeProvider.System);
+
+var connectionString = builder.Configuration.GetConnectionString("database")
+    ?? throw new Exception("Yo need a connection string");
+
+
+builder.Services.AddMarten(config =>
+{
+    config.Connection(connectionString);
+}).UseLightweightSessions();
+
 var app = builder.Build(); // THE LINE IN THE SAND
 // Everything after this line is configuring how the web server handles incoming requests/responses
 // Configure the HTTP request pipeline.
